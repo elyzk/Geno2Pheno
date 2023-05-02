@@ -55,7 +55,6 @@ fun UploadBtn(photoLauncher : ManagedActivityResultLauncher<PickVisualMediaReque
                 }) {
                     Text(text = "Pick one photo")
                 }
-
             }
         }
 
