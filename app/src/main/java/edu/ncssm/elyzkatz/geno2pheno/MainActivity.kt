@@ -7,9 +7,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.widget.Button
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -17,27 +14,19 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
-import androidx.camera.core.impl.utils.ContextUtil
-import androidx.camera.core.impl.utils.ContextUtil.getBaseContext
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Button
-import androidx.compose.material.Colors
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import coil.compose.AsyncImage
@@ -58,7 +47,7 @@ class MainActivity : ComponentActivity() {
             val outputUri = input[1]
 
             val uCrop = UCrop.of(inputUri, outputUri)
-                .withAspectRatio(1f, 1.618f)
+                .withAspectRatio(3f, 4f)
 
             return uCrop.getIntent(context)
         }
@@ -70,7 +59,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
         // If I don't have Camera permissions, ask for them
         if (ContextCompat.checkSelfPermission(
@@ -90,7 +78,6 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             Geno2PhenoTheme {
-                var btn_opacity = 0f
                 // A surface container using the 'background' color from the theme
                 var selectedImageUri by remember { // Empty uri
                     mutableStateOf<Uri?>(null)
@@ -101,7 +88,13 @@ class MainActivity : ComponentActivity() {
 
                 val cropperLauncher = rememberLauncherForActivityResult(
                     contract = uCropContract,
-                    onResult = { uri -> croppedImageUri = uri })
+                    onResult = { uri ->
+                        croppedImageUri = uri
+                        val starter = Intent(this@MainActivity, DNAEditor::class.java)
+                        starter.putExtra("uri", croppedImageUri.toString())
+                        startActivity(starter)
+                        finish()
+                    })
 
                 val singlePhotoPickerLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.PickVisualMedia(),
@@ -126,11 +119,16 @@ class MainActivity : ComponentActivity() {
                 ) {
                     item {// Pick button
                         Row(
-                            modifier = Modifier.fillMaxWidth().height(100.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp),
                             horizontalArrangement = Arrangement.SpaceAround
                         ) {
                             Button(
-                                modifier = Modifier.weight(1f).fillMaxHeight().padding(5.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                                    .padding(5.dp),
                                 onClick = {
                                     singlePhotoPickerLauncher.launch(
                                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
@@ -140,7 +138,10 @@ class MainActivity : ComponentActivity() {
                             }
                             // Camera code goes here
                             Button(
-                                modifier = Modifier.weight(1f).fillMaxHeight().padding(5.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                                    .padding(5.dp),
                                 onClick = {
                                     cameraProvider.addListener(CameraHandler(), ContextCompat.getMainExecutor(
                                         getBaseContext()))
@@ -153,7 +154,9 @@ class MainActivity : ComponentActivity() {
 
                     item {
                         AndroidView(
-                            modifier = Modifier.padding(10.dp).absoluteOffset(0.dp, 100.dp),
+                            modifier = Modifier
+                                .padding(10.dp)
+                                .absoluteOffset(0.dp, 100.dp),
                             factory = { context ->
                                 cameraView = PreviewView(context)
                                 cameraView!!
@@ -163,16 +166,6 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     }
-
-                    item {
-                        Button(
-                            modifier = Modifier.fillMaxSize().alpha(btn_opacity),
-                            onClick = {
-                            }) {
-                            Text(text = "Select photo")
-                        }
-                    }
-
 
                     item { // Display photo
                         AsyncImage(
